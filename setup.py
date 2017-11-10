@@ -27,7 +27,7 @@ setup(
     keywords='wechat robot weixin wxReply',         # 关键字
     author='tianshl',                               # 作者
     author_email='xiyuan91@126.com',                # 邮箱
-    url='https://my.oschina.net/tianshl/blog',      # 包含包的项目地址
+    url='https://github.com/tianshl/wxReply',       # 包含包的项目地址
     license='MIT',                                  # 授权方式
     packages=find_packages(),                       # 包列表
     install_requires=['requests', 'itchat'],
