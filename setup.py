@@ -3,6 +3,7 @@
 from setuptools import setup, find_packages
 from codecs import open
 from os import path
+from wxReply import __version__
 
 here = path.abspath(path.dirname(__file__))
 
@@ -15,7 +16,7 @@ __date__ = '2017/01/26'
 
 setup(
     name='wxReply',                                 # 名称
-    version='1.0.6',                                # 版本号
+    version=__version__,                            # 版本号
     description='wxReply',                          # 简单描述
     long_description=long_description,              # 详细描述
     classifiers=[

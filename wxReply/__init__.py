@@ -4,6 +4,7 @@ from .wxReply import run
 
 __author__ = 'tianshl'
 __date__ = '2017/01/26'
+__version__ = '1.0.7'
 
 __all__ = ["wxReply"]
 
