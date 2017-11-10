@@ -11,10 +11,11 @@ import time
 import threading
 
 try:
+    reload(sys)
+    sys.setdefaultencoding('utf-8')
+except:
     import importlib
     importlib.reload(sys)
-except Exception as e:
-    print(e)
 
 __author__ = 'tianshl'
 __date__ = '2017/01/26'
@@ -480,10 +481,6 @@ def run(tl_key, p_bans=tuple(), g_bans=tuple(), p_open=True, g_open=True, qr=2):
         '---'    '---'  '.(_,_).' '--'    '--'  `-...-'  '(_,_) '---'   `--------` 
 
     """)
-
-    if sys.version_info < (3, 0):
-        print("The python version number needs to be greater than 3.0")
-        return
 
     global TL_KEY, OPEN_CHAT, OPEN_GROUP, USERNAME
 

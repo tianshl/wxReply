@@ -34,4 +34,5 @@ setup(
     install_requires=['requests', 'itchat'],
     include_package_data=True,
     zip_safe=True,
+    use_2to3=True,
 )
