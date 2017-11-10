@@ -481,8 +481,8 @@ def run(tl_key, p_bans=tuple(), g_bans=tuple(), p_open=True, g_open=True, qr=2):
 
     """)
 
-    if sys.version_info < (3, 5):
-        print("The python version number needs to be greater than 3.5")
+    if sys.version_info < (3, 0):
+        print("The python version number needs to be greater than 3.0")
         return
 
     global TL_KEY, OPEN_CHAT, OPEN_GROUP, USERNAME

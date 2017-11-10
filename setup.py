@@ -20,7 +20,7 @@ setup(
     long_description=long_description,              # 详细描述
     classifiers=[
         'License :: OSI Approved :: MIT License',
-        'Programming Language :: Python',
+        'Programming Language :: Python :: 3 :: Only',
         'Intended Audience :: Developers',
         'Operating System :: OS Independent',
     ],
