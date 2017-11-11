@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 
+rm itchat.pkl
 rm -rf .tmp
 rm -rf __pycache__
 rm -rf dist

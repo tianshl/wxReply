@@ -20,9 +20,6 @@ except:
 __author__ = 'tianshl'
 __date__ = '2017/01/26'
 
-# 我的username
-USERNAME = ''
-
 # 开启自动聊天
 OPEN_CHAT = True
 
@@ -47,10 +44,8 @@ if not os.path.exists(tmp_dir):
     os.mkdir(tmp_dir)
 
 # 图灵机器人
-TL_KEY = ''
-
 tl_data = {
-    'key': TL_KEY,
+    'key': '',
     'info': '',
     'loc': '青岛市崂山区',
     'userid': '',
@@ -96,14 +91,14 @@ def receive(msg):
     # 接受者
     _to = msg['ToUserName']
     # 指令
-    is_ins = _from == _to
+    is_ins = _to == 'filehelper'
 
     # 是否为群聊
     is_group = 'IsAt' in msg
     actual_name = msg['ActualNickName'] if is_group else None
 
     # 消息发送者在好友列表中的备注
-    remark = p_name(_from) or actual_name
+    remark = p_name(msg['ActualUserName'] if is_group else _from) or actual_name
     # 消息ID
     msg_id = msg['MsgId']
     # 消息类型
@@ -154,7 +149,7 @@ def receive(msg):
         "msg_share": msg_share
     }
     if is_group:
-        msg_data['g_name'] = g_name(_to)
+        msg_data['g_name'] = g_name(_from)
     msgs.update({
         msg_id: msg_data
     })
@@ -174,7 +169,10 @@ def receive(msg):
     elif (OPEN_CHAT and _from not in p_ban) or is_ins:
         # 开启自动回复 并且 不在禁止自动回复列表中
         resp = resolve(msg_content, is_ins, _from)
-        itchat.send(resp, _from)
+        if is_ins:
+            send_to_file_helper(resp)
+        else:
+            itchat.send(resp, _from)
 
 
 @itchat.msg_register(NOTE, True, True, True)
@@ -192,7 +190,7 @@ def recall(msg):
         if len(msg_id) < 11:
             # 消息为表情包
             path = tmp_dir + meme
-            itchat.send_file(path, toUserName=USERNAME)
+            itchat.send_file(path)
             os.remove(path)
 
         else:
@@ -219,7 +217,7 @@ def recall(msg):
                 resp = '{}\n就是这个链接\n{}'.format(resp, old_msg.get('msg_share'))
 
             # 发送撤回的消息
-            send_to_me(resp)
+            send_to_file_helper(resp)
 
             # 发送文件
             if msg_type in [PICTURE, VIDEO, RECORDING, ATTACHMENT]:
@@ -228,8 +226,7 @@ def recall(msg):
                     prefix = 'img'
 
                 path = tmp_dir + msg_content
-                file = '@{}@{}'.format(prefix, path)
-                send_to_me(file)
+                send_to_file_helper('@{}@{}'.format(prefix, path))
                 os.remove(path)
 
 
@@ -246,11 +243,11 @@ def resolve(content, is_ins, _from):
 
     if is_ins:
         # 针对某个人开启|关闭自动回复
-        reg_ban = re.compile('(开启|关闭)\s*(.*)')
+        reg_ban = re.compile('(开启|关闭)\s+(.+)')
         match = reg_ban.match(content)
 
         # 针对某个群组开启|关闭自动回复
-        reg_g_ban = re.compile('(开启|关闭)群\s*(.*)')
+        reg_g_ban = re.compile('(开启|关闭)群\s+(.+)')
         if match:
             action, remark = match.groups()
             try:
@@ -317,21 +314,21 @@ def clear(_msgs):
         _msgs = cp
 
         # 遍历临时文件列表
-        for file in os.listdir(tmp_dir):
-            if file.split('.')[0] < before:
-                os.remove(tmp_dir + file)
+        for f in os.listdir(tmp_dir):
+            if f.split('.')[0] < before:
+                os.remove(tmp_dir + f)
 
         # 隔5分钟清理一次
         time.sleep(300)
 
 
-def send_to_me(msg):
+def send_to_file_helper(msg):
     """
-    给我发送消息
+    给文件传输助手发送消息
     :param msg: 消息
     :return: 
     """
-    itchat.send(msg, USERNAME)
+    itchat.send(msg, 'filehelper')
 
 
 def p_username(remark):
@@ -482,17 +479,15 @@ def run(tl_key, p_bans=tuple(), g_bans=tuple(), p_open=True, g_open=True, qr=2):
 
     """)
 
-    global TL_KEY, OPEN_CHAT, OPEN_GROUP, USERNAME
+    global OPEN_CHAT, OPEN_GROUP
 
     # 设置图灵key
-    TL_KEY = tl_key
+    tl_data['key'] = tl_key
     # 设置回复状态
     OPEN_CHAT = p_open
     OPEN_GROUP = g_open
     # 配置itchat
     itchat.auto_login(hotReload=True, enableCmdQR=qr)
-    # 设置我的用户名
-    USERNAME = itchat.search_friends().get('UserName')
     # 默认黑名单
     for ban in p_bans:
         try:
@@ -510,7 +505,7 @@ def run(tl_key, p_bans=tuple(), g_bans=tuple(), p_open=True, g_open=True, qr=2):
             continue
 
     # 提示信息
-    send_to_me('回复“菜单”二字，获得帮助。')
+    send_to_file_helper('回复“菜单”二字，获得帮助。')
 
     # 定时清理历史消息
     t = threading.Thread(target=clear, args=(msgs,))
@@ -521,8 +516,8 @@ def run(tl_key, p_bans=tuple(), g_bans=tuple(), p_open=True, g_open=True, qr=2):
 
 
 if __name__ == '__main__':
-    p = ('槑',)
-    g = ('friends',)
-    k = ""
+    p = ('搞事情',)
+    g = ('',)
+    k = "1b37bcb88f6b4627a82ab6f75f99f787"
 
-    run(k, p, g)
+    run(k, p)
