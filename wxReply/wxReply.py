@@ -518,6 +518,6 @@ def run(tl_key, p_bans=tuple(), g_bans=tuple(), p_open=True, g_open=True, qr=2):
 if __name__ == '__main__':
     p = ('搞事情',)
     g = ('',)
-    k = "1b37bcb88f6b4627a82ab6f75f99f787"
+    k = ""
 
     run(k, p)
