@@ -7,8 +7,12 @@ from wxReply import __version__
 
 here = path.abspath(path.dirname(__file__))
 
-with open(path.join(here, 'README.rst'), encoding='utf-8') as f:
-    long_description = f.read()
+
+def content(name):
+    with open(path.join(here, name), encoding='utf-8') as f:
+        desc = f.read()
+    return desc
+
 
 __author__ = 'tianshl'
 __date__ = '2017/01/26'
@@ -18,10 +22,10 @@ setup(
     name='wxReply',                                 # 名称
     version=__version__,                            # 版本号
     description='wxReply',                          # 简单描述
-    long_description=long_description,              # 详细描述
+    long_description=content('README.rst'),         # 详细描述
     classifiers=[
         'License :: OSI Approved :: MIT License',
-        'Programming Language :: Python :: 3 :: Only',
+        'Programming Language :: Python',
         'Intended Audience :: Developers',
         'Operating System :: OS Independent',
     ],

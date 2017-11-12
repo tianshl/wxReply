@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 import copy
+import json
 import os
+from os import path
 import re
 
 import itchat
@@ -19,6 +21,11 @@ except:
 
 __author__ = 'tianshl'
 __date__ = '2017/01/26'
+
+# 当前文件绝对路径
+here = path.abspath(path.dirname(__file__))
+# 配置文件路径
+cfg_path = path.join(here, 'wxReply.cfg')
 
 # 开启自动聊天
 OPEN_CHAT = True
@@ -39,7 +46,7 @@ msgs = {}
 meme = None
 
 # 临时文件路径
-tmp_dir = './.tmp/'
+tmp_dir = path.join(here, '.tmp/')
 if not os.path.exists(tmp_dir):
     os.mkdir(tmp_dir)
 
@@ -241,6 +248,10 @@ def resolve(content, is_ins, _from):
     global OPEN_CHAT
     global OPEN_GROUP
 
+    # 多余的系统消息或空消息
+    if not content:
+        return
+
     if is_ins:
         # 针对某个人开启|关闭自动回复
         reg_ban = re.compile('(开启|关闭)\s+(.+)')
@@ -273,11 +284,11 @@ def resolve(content, is_ins, _from):
             OPEN_CHAT = False
             return '已经关闭自动回复'
 
-        elif content == '开启群回复':
+        elif content == '开启群':
             OPEN_GROUP = True
             return '已经开启群自动回复'
 
-        elif content == '关闭群回复':
+        elif content == '关闭群':
             OPEN_GROUP = False
             return '已经关闭群自动回复'
 
@@ -442,7 +453,7 @@ def get_menu():
         '{1}开启|关闭自动回复\n'
         '开启|关闭 人名\n'
         '{1}对人名开启|关闭自动回复\n'
-        '开启|关闭群回复\n'
+        '开启|关闭群\n'
         '{1}开启|关闭群内艾特自动回复\n'
         '开启|关闭群 群名\n'
         '{1}对群名开启|关闭艾特自动回复\n'
@@ -453,7 +464,38 @@ def get_menu():
     ).format('-' * 27, ' ' * 5)
 
 
-def run(tl_key, p_bans=tuple(), g_bans=tuple(), p_open=True, g_open=True, qr=2):
+def set_config(overwrite):
+    """
+    写配置文件 (状态, 黑名单)
+    
+    :param overwrite: 覆盖配置 
+    :return: 
+    """
+    if not overwrite:
+        return
+
+    with open(cfg_path, 'w') as f:
+        d = json.dumps({
+            'p_open': OPEN_CHAT,
+            'g_open': OPEN_GROUP,
+            'p_bans': tuple(map(lambda u: p_name(u), p_ban)),
+            'g_bans': tuple(map(lambda u: g_name(u), g_ban)),
+        })
+        f.write(d)
+
+
+def get_config():
+    """
+    读配置 (状态, 黑名单)
+    :return: 
+    """
+    if not path.exists(cfg_path):
+        return {}
+    with open(cfg_path, 'r') as f:
+        return json.loads(f.read() or '{}')
+
+
+def run(tl_key, p_bans=tuple(), g_bans=tuple(), p_open=True, g_open=True, qr=2, enable_cfg=False):
     """
     启动
     :param tl_key:  图灵key
@@ -462,6 +504,7 @@ def run(tl_key, p_bans=tuple(), g_bans=tuple(), p_open=True, g_open=True, qr=2):
     :param p_open:  开启自动回复
     :param g_open:  开启群艾特回复
     :param qr:      二维码类型
+    :param enable_cfg:  是否启用配置文件
     :return: 
     """
 
@@ -483,6 +526,17 @@ def run(tl_key, p_bans=tuple(), g_bans=tuple(), p_open=True, g_open=True, qr=2):
 
     # 设置图灵key
     tl_data['key'] = tl_key
+
+    # 配置信息
+    if enable_cfg:
+        # 读配置
+        cfg = get_config()
+        if cfg:
+            p_open = cfg.get('p_open')
+            g_open = cfg.get('g_open')
+            p_bans = cfg.get('p_bans')
+            g_bans = cfg.get('g_bans')
+
     # 设置回复状态
     OPEN_CHAT = p_open
     OPEN_GROUP = g_open
@@ -513,11 +567,13 @@ def run(tl_key, p_bans=tuple(), g_bans=tuple(), p_open=True, g_open=True, qr=2):
     t.start()
     # 启动
     itchat.run()
+    # 写配置
+    set_config(enable_cfg)
 
 
 if __name__ == '__main__':
     p = ('搞事情',)
-    g = ('',)
+    g = ('测试群',)
     k = ""
 
-    run(k, p)
+    run(k, p, g, enable_cfg=True)
