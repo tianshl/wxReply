@@ -24,10 +24,19 @@ setup(
     description='wxReply',                          # 简单描述
     long_description=content('README.rst'),         # 详细描述
     classifiers=[
-        'License :: OSI Approved :: MIT License',
-        'Programming Language :: Python',
+        'Development Status :: 3 - Alpha',
+
         'Intended Audience :: Developers',
-        'Operating System :: OS Independent',
+        'Topic :: Software Development :: Libraries :: Python Modules',
+
+        'License :: OSI Approved :: MIT License',
+
+        'Programming Language :: Python :: 2',
+        'Programming Language :: Python :: 2.7',
+        'Programming Language :: Python :: 3',
+        'Programming Language :: Python :: 3.3',
+        'Programming Language :: Python :: 3.4',
+        'Programming Language :: Python :: 3.5',
     ],
     keywords='wechat robot weixin wxReply',         # 关键字
     author='tianshl',                               # 作者
@@ -35,8 +44,6 @@ setup(
     url='https://github.com/tianshl/wxReply',       # 包含包的项目地址
     license='MIT',                                  # 授权方式
     packages=find_packages(),                       # 包列表
-    install_requires=['requests', 'itchat'],
-    include_package_data=True,
-    zip_safe=True,
-    use_2to3=True,
+    install_requires=['requests', 'itchat'],        # 依赖
+    extras_require={},
 )
