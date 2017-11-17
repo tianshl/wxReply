@@ -45,6 +45,12 @@ msgs = {}
 # 表情包内容
 meme = None
 
+# 启用配置文件
+ENABLE_CFG = False
+
+# 群聊 仅艾特
+ONLY_AT = True
+
 # 临时文件路径
 tmp_dir = path.join(here, '.tmp/')
 if not os.path.exists(tmp_dir):
@@ -167,10 +173,13 @@ def receive(msg):
 
     # 判断是否为群聊
     if is_group:
-        if OPEN_GROUP and msg['IsAt'] and _to not in g_ban:
+        if OPEN_GROUP and _to not in g_ban:
+            # 仅艾特
+            if ONLY_AT and not msg['IsAt']:
+                return
             # 开启群回复 并且 是艾特我 并且 没在黑名单中
             resp = resolve(msg_content, is_ins, _from)
-            resp = '@{}\n{}'.format(actual_name, resp)
+            resp = '@{} {}'.format(actual_name, resp)
             itchat.send(resp, _from)
 
     elif (OPEN_CHAT and _from not in p_ban) or is_ins:
@@ -245,8 +254,7 @@ def resolve(content, is_ins, _from):
     :param _from:   发送者 
     :return:        结果
     """
-    global OPEN_CHAT
-    global OPEN_GROUP
+    global OPEN_CHAT, OPEN_GROUP, ONLY_AT
 
     # 多余的系统消息或空消息
     if not content:
@@ -254,15 +262,19 @@ def resolve(content, is_ins, _from):
 
     if is_ins:
         # 针对某个人开启|关闭自动回复
-        reg_ban = re.compile('(开启|关闭)\s+(.+)')
+        reg_ban = re.compile('/(开启|关闭)\s+(.+)')
         match = reg_ban.match(content)
 
         # 针对某个群组开启|关闭自动回复
-        reg_g_ban = re.compile('(开启|关闭)群\s+(.+)')
+        reg_g_ban = re.compile('/(开启|关闭)群\s+(.+)')
+
+        # 仅艾特
+        reg_at = re.compile('/仅艾特\s+(开启|关闭)')
         if match:
             action, remark = match.groups()
             try:
                 remove_p_ban(remark) if action == '开启' else add_p_ban(remark)
+                update_cfg('p_bans', action == '开启', remark)
                 return '已{}对{}的自动回复'.format(action, remark)
             except Exception as ex:
                 print(ex)
@@ -271,34 +283,45 @@ def resolve(content, is_ins, _from):
             action, remark = reg_g_ban.match(content).groups()
             try:
                 remove_g_ban(remark) if action == '开启' else add_g_ban(remark)
+                update_cfg('g_bans', action == '开启', remark)
                 return '已{}对{}群的自动回复'.format(action, remark)
             except Exception as ex:
                 print(ex)
                 return '操作有误'
 
-        elif content == '开启':
+        elif reg_at.match(content):
+            action = reg_at.match(content).groups()
+            ONLY_AT = action == '开启'
+            update_cfg('only_at', ONLY_AT)
+            return '以{}仅艾特自动回复'.format(action)
+
+        elif content == '/开启':
             OPEN_CHAT = True
+            update_cfg('p_open', True)
             return '已经开启自动回复'
 
-        elif content == '关闭':
+        elif content == '/关闭':
             OPEN_CHAT = False
+            update_cfg('p_open', False)
             return '已经关闭自动回复'
 
-        elif content == '开启群':
+        elif content == '/开启群':
             OPEN_GROUP = True
+            update_cfg('g_open', True)
             return '已经开启群自动回复'
 
-        elif content == '关闭群':
+        elif content == '/关闭群':
             OPEN_GROUP = False
+            update_cfg('g_open', False)
             return '已经关闭群自动回复'
 
-        elif content == '状态':
+        elif content == '/状态':
             return get_state()
 
-        elif content == '黑名单':
+        elif content == '/黑名单':
             return get_bans()
 
-        elif content == '菜单':
+        elif content == '/菜单':
             return get_menu()
 
     return auto_chat(content, _from)
@@ -367,6 +390,8 @@ def p_name(username):
     :return: 
     """
     friend = itchat.search_friends(userName=username)
+    if not friend:
+        return ''
     return friend.get('RemarkName') or friend.get('NickName')
 
 
@@ -377,6 +402,8 @@ def g_name(username):
     :return: 
     """
     friend = itchat.search_chatrooms(userName=username)
+    if not friend:
+        return ''
     return friend.get('RemarkName') or friend.get('NickName')
 
 
@@ -424,6 +451,7 @@ def get_state():
     resp = '<状态>\n{}\n'.format('-' * 25)
     resp += '自动回复: {}\n'.format('开启' if OPEN_CHAT else '关闭')
     resp += '群回复: {}\n'.format('开启' if OPEN_GROUP else '关闭')
+    resp += '仅艾特: {}\n'.format('开启' if ONLY_AT else '关闭')
     return resp
 
 
@@ -448,6 +476,7 @@ def get_menu():
     """
     return (
         '<帮助菜单>\n'
+        '注: 指令以/开头\n'
         '以下为可用指令及描述信息\n{0}\n'
         '开启|关闭\n'
         '{1}开启|关闭自动回复\n'
@@ -455,6 +484,8 @@ def get_menu():
         '{1}对人名开启|关闭自动回复\n'
         '开启|关闭群\n'
         '{1}开启|关闭群内艾特自动回复\n'
+        '仅艾特 开启|关闭\n'
+        '{1}开启|关闭仅艾特功能\n'
         '开启|关闭群 群名\n'
         '{1}对群名开启|关闭艾特自动回复\n'
         '状态\n'
@@ -464,7 +495,7 @@ def get_menu():
     ).format('-' * 27, ' ' * 5)
 
 
-def set_config(overwrite):
+def set_cfg(overwrite):
     """
     写配置文件 (状态, 黑名单)
     
@@ -476,6 +507,7 @@ def set_config(overwrite):
 
     with open(cfg_path, 'w') as f:
         d = json.dumps({
+            'only_at': ONLY_AT,
             'p_open': OPEN_CHAT,
             'g_open': OPEN_GROUP,
             'p_bans': tuple(map(lambda u: p_name(u), p_ban)),
@@ -484,7 +516,29 @@ def set_config(overwrite):
         f.write(d)
 
 
-def get_config():
+def update_cfg(name, action, target=''):
+
+    if not ENABLE_CFG:
+        return
+
+    with open(cfg_path) as f:
+        cfg = json.loads(f.read())
+        if name in ['p_open', 'g_open']:
+            cfg[name] = action
+        elif name in ['p_bans', 'g_bans']:
+            if action:
+                cfg[name].remove(target)
+            else:
+                cfg[name].append(target)
+        elif name == 'only_at':
+            cfg[name] = action
+        _cfg = json.dumps(cfg)
+
+    with open(cfg_path, 'w') as f:
+        f.write(_cfg)
+
+
+def get_cfg():
     """
     读配置 (状态, 黑名单)
     :return: 
@@ -522,15 +576,16 @@ def run(tl_key, p_bans=tuple(), g_bans=tuple(), p_open=True, g_open=True, qr=2, 
 
     """)
 
-    global OPEN_CHAT, OPEN_GROUP
+    global OPEN_CHAT, OPEN_GROUP, ENABLE_CFG
 
     # 设置图灵key
     tl_data['key'] = tl_key
 
+    ENABLE_CFG = enable_cfg
     # 配置信息
-    if enable_cfg:
+    if ENABLE_CFG:
         # 读配置
-        cfg = get_config()
+        cfg = get_cfg()
         if cfg:
             p_open = cfg.get('p_open')
             g_open = cfg.get('g_open')
@@ -540,6 +595,7 @@ def run(tl_key, p_bans=tuple(), g_bans=tuple(), p_open=True, g_open=True, qr=2, 
     # 设置回复状态
     OPEN_CHAT = p_open
     OPEN_GROUP = g_open
+
     # 配置itchat
     itchat.auto_login(hotReload=True, enableCmdQR=qr)
     # 默认黑名单
@@ -559,7 +615,10 @@ def run(tl_key, p_bans=tuple(), g_bans=tuple(), p_open=True, g_open=True, qr=2, 
             continue
 
     # 提示信息
-    send_to_file_helper('回复“菜单”二字，获得帮助。')
+    send_to_file_helper('输入“/菜单”指令，获得帮助。')
+
+    # 写配置
+    set_cfg(ENABLE_CFG)
 
     # 定时清理历史消息
     t = threading.Thread(target=clear, args=(msgs,))
@@ -567,8 +626,6 @@ def run(tl_key, p_bans=tuple(), g_bans=tuple(), p_open=True, g_open=True, qr=2, 
     t.start()
     # 启动
     itchat.run()
-    # 写配置
-    set_config(enable_cfg)
 
 
 if __name__ == '__main__':
