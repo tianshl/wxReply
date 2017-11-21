@@ -3,17 +3,16 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-Welcome to wxReply's documentation!
-===================================
+wxReply
+=======
 
-.. toctree::
-   :maxdepth: 2
-   :caption: Contents:
+.. image:: _static/python-3+-brightgreen.svg
+    :width: 80 px
+
+.. image:: _static/version-1.2.1-brightgreen.svg
+    :width: 100 px
 
 
-
-Indices and tables
-==================
 
 * :ref:`genindex`
 * :ref:`modindex`
