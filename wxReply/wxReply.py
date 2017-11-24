@@ -24,8 +24,16 @@ __date__ = '2017/01/26'
 
 # 当前文件绝对路径
 here = path.abspath(path.dirname(__file__))
+
+# 临时文件路径
+tmp_dir = path.join(here, '.tmp/')
+if not os.path.exists(tmp_dir):
+    os.mkdir(tmp_dir)
+
+CFG_NAME = 'wxReply'
 # 配置文件路径
-cfg_path = path.join(here, 'wxReply.cfg')
+cfg_path = path.join(tmp_dir, '{}.cfg'.format(CFG_NAME))
+pkl_path = path.join(tmp_dir, '{}.pkl'.format(CFG_NAME))
 
 # 开启自动聊天
 OPEN_CHAT = True
@@ -50,11 +58,6 @@ ENABLE_CFG = False
 
 # 群聊 仅艾特
 ONLY_AT = True
-
-# 临时文件路径
-tmp_dir = path.join(here, '.tmp/')
-if not os.path.exists(tmp_dir):
-    os.mkdir(tmp_dir)
 
 # 图灵机器人
 tl_data = {
@@ -549,7 +552,7 @@ def get_cfg():
         return json.loads(f.read() or '{}')
 
 
-def run(tl_key, p_bans=tuple(), g_bans=tuple(), p_open=True, g_open=True, qr=2, enable_cfg=False):
+def run(tl_key, p_bans=tuple(), g_bans=tuple(), p_open=True, g_open=True, qr=2, enable_cfg=False, cfg_name="wxReply"):
     """
     启动
     :param tl_key:  图灵key
@@ -576,7 +579,10 @@ def run(tl_key, p_bans=tuple(), g_bans=tuple(), p_open=True, g_open=True, qr=2, 
 
     """)
 
-    global OPEN_CHAT, OPEN_GROUP, ENABLE_CFG
+    global OPEN_CHAT, OPEN_GROUP, ENABLE_CFG, CFG_NAME
+
+    # 配置文件名称
+    CFG_NAME = cfg_name
 
     # 设置图灵key
     tl_data['key'] = tl_key
@@ -597,7 +603,7 @@ def run(tl_key, p_bans=tuple(), g_bans=tuple(), p_open=True, g_open=True, qr=2, 
     OPEN_GROUP = g_open
 
     # 配置itchat
-    itchat.auto_login(hotReload=True, enableCmdQR=qr)
+    itchat.auto_login(hotReload=True, enableCmdQR=qr, statusStorageDir=pkl_path)
     # 默认黑名单
     for ban in p_bans:
         try:

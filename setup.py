@@ -20,7 +20,7 @@ __date__ = '2017/01/26'
 
 setup(
     name='wxReply',                                 # 名称
-    version=__version__,                            # 版本号
+    version='1.2.2',                                # 版本号
     description='wxReply',                          # 简单描述
     long_description=content('README.rst'),         # 详细描述
     classifiers=[
