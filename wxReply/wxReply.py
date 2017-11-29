@@ -47,6 +47,9 @@ p_ban = set()
 # 禁止自动回复的群组
 g_ban = set()
 
+# 禁止自动回复的公众号
+m_ban = set()
+
 # 历史信息
 msgs = {}
 
@@ -172,6 +175,10 @@ def receive(msg):
 
     # 不回复的类型: 图片
     if msg_type in [PICTURE, VIDEO, RECORDING, ATTACHMENT]:
+        return
+
+    if _from in m_ban:
+        # 不回复公众号
         return
 
     # 判断是否为群聊
@@ -619,6 +626,10 @@ def run(tl_key, p_bans=tuple(), g_bans=tuple(), p_open=True, g_open=True, qr=2, 
         except Exception as ex:
             print(ex)
             continue
+
+    # 获取公众号列表
+    for ban in itchat.get_mps(update=True):
+        m_ban.add(ban['UserName'])
 
     # 提示信息
     send_to_file_helper('输入“/菜单”指令，获得帮助。')
