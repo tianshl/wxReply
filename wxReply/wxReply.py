@@ -34,6 +34,7 @@ CFG_NAME = 'wxReply'
 # 配置文件路径
 cfg_path = path.join(tmp_dir, '{}.cfg'.format(CFG_NAME))
 pkl_path = path.join(tmp_dir, '{}.pkl'.format(CFG_NAME))
+pay_path = path.join(tmp_dir, '{}.pay'.format(CFG_NAME))
 
 # 开启自动聊天
 OPEN_CHAT = True
@@ -49,6 +50,9 @@ g_ban = set()
 
 # 禁止自动回复的公众号
 m_ban = set()
+
+# 微信支付
+WX_PAY = ''
 
 # 历史信息
 msgs = {}
@@ -157,6 +161,18 @@ def receive(msg):
         msg_content = msg['Text']
         msg_share = msg['Url']
 
+        # if _from == WX_PAY:
+        #     # 微信支付
+        #     try:
+        #         # 付款
+        #         reg = re.compile(r'<des><!\[CDATA\[支付金额：￥(.*)\s{2}\n收款方：(.*)\n支付方式：零钱\n交易状态：支付成功，对方已收款\n]]></des>')
+        #         money, who = reg.search(msg['Content']).group(1, 2)
+        #         add_pay(money, who)
+        #     except:
+        #         # 收款
+        #         money = re.search("微信支付收款(.*)元", msg_content).group(1)
+        #         add_pay(money, None, True)
+
     meme = msg_content
 
     # 加入消息历史中
@@ -215,9 +231,9 @@ def recall(msg):
 
         if len(msg_id) < 11:
             # 消息为表情包
-            path = tmp_dir + meme
-            itchat.send_file(path)
-            os.remove(path)
+            _path = tmp_dir + meme
+            itchat.send_file(_path)
+            os.remove(_path)
 
         else:
             msg_content = old_msg.get('msg_content')
@@ -251,9 +267,9 @@ def recall(msg):
                 if msg_type == PICTURE:
                     prefix = 'img'
 
-                path = tmp_dir + msg_content
-                send_to_file_helper('@{}@{}'.format(prefix, path))
-                os.remove(path)
+                _path = tmp_dir + msg_content
+                send_to_file_helper('@{}@{}'.format(prefix, _path))
+                os.remove(_path)
 
 
 def resolve(content, is_ins, _from):
@@ -300,7 +316,7 @@ def resolve(content, is_ins, _from):
                 return '操作有误'
 
         elif reg_at.match(content):
-            action = reg_at.match(content).groups()
+            action, = reg_at.match(content).groups()
             ONLY_AT = action == '开启'
             update_cfg('only_at', ONLY_AT)
             return '以{}仅艾特自动回复'.format(action)
@@ -527,7 +543,13 @@ def set_cfg(overwrite):
 
 
 def update_cfg(name, action, target=''):
-
+    """
+    更新配置
+    :param name:    操作名称
+    :param action:  操作
+    :param target:  操作对象
+    :return: 
+    """
     if not ENABLE_CFG:
         return
 
@@ -557,6 +579,39 @@ def get_cfg():
         return {}
     with open(cfg_path, 'r') as f:
         return json.loads(f.read() or '{}')
+
+
+def add_pay(money, who, income=False):
+    """
+    微信支付统计
+    
+    :param money:   金额
+    :param who:     人
+    :param income:  收入|支出
+    :return: 
+    """
+    if not path.exists(pay_path):
+        pay = {"pay_in": [], "pay_out": []}
+    else:
+        with open(pay_path, 'r') as f:
+            pay = json.loads(f.read())
+
+    date = time.strftime("%Y-%m-%d %H:%M", time.localtime())
+    item = {
+        'date': date,
+        'money': money,
+    }
+    if income:
+        pay_in = pay.get('pay_in')
+        pay_in.append(item)
+
+    else:
+        pay_out = pay.get('pay_out')
+        item.update({"who": who})
+        pay_out.append(item)
+
+    with open(pay_path, 'w') as f:
+        f.write(json.dumps(pay))
 
 
 def run(tl_key, p_bans=tuple(), g_bans=tuple(), p_open=True, g_open=True, qr=2, enable_cfg=False, cfg_name="wxReply"):
