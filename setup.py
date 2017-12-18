@@ -19,7 +19,7 @@ __date__ = '2017/01/26'
 
 setup(
     name='wxReply',                                 # 名称
-    version='1.2.4',                                # 版本号
+    version='1.2.5',                                # 版本号
     description='wxReply',                          # 简单描述
     long_description=content('README.rst'),         # 详细描述
     classifiers=[
@@ -43,6 +43,6 @@ setup(
     url='https://github.com/tianshl/wxReply',       # 包含包的项目地址
     license='MIT',                                  # 授权方式
     packages=find_packages(),                       # 包列表
-    install_requires=['requests', 'itchat', 'pyecharts'],        # 依赖
+    install_requires=['requests', 'itchat'],        # 依赖
     extras_require={},
 )
