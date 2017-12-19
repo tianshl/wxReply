@@ -8,9 +8,9 @@ wechat的功能是基于itchat的，在itchat原有功能的基础上扩展一�
 
 .. code:: bash
 
-    pip install wxReply==1.2.4
+    pip install wxReply
     or
-    pip3 install wxReply==1.2.4
+    pip3 install wxReply
 
 **功能介绍**
 
