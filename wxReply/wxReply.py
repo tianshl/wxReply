@@ -199,7 +199,7 @@ def receive(msg):
 
     # 判断是否为群聊
     if is_group:
-        if OPEN_GROUP and _to not in g_ban:
+        if OPEN_GROUP and _from not in g_ban:
             # 仅艾特
             if ONLY_AT and not msg['IsAt']:
                 return
